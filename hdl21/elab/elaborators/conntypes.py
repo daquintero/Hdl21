@@ -131,7 +131,7 @@ class ConnTypes(Elaborator):
         }
         if bad_conns:
             msg = f"Invalid connections `{bad_conns}` on Instance `{inst.name}` in Module `{module.name}`"
-            # self.fail(msg)
+            self.fail(msg)
 
         self.stack.pop()  # Checks out, we good, pop this Instance from our elab-stack.
 
@@ -225,7 +225,7 @@ class ConnTypes(Elaborator):
         return width(conn, failer=self.fail)
 
 
-def io_for_checking(parent: Module, i: Instantiable) -> Dict[str, "Connectable"]:
+def io_for_checking(parent: Module, i: Instantiable, debug_instance: bool = False) -> Dict[str, "Connectable"]:
     """Get the relevant IOs of Instantiable `i` for checking.
     Depending on the elaboration state of `parent` and `i`, this may include the "bundled" or "flattened" IOs."""
 
@@ -238,7 +238,10 @@ def io_for_checking(parent: Module, i: Instantiable) -> Dict[str, "Connectable"]
         return copy.copy(i.ports)
 
     if not isinstance(i, Module):
-        raise TypeError(f"Invalid Instantiable: {i}")
+        if debug_instance:
+            pass
+        else:
+            raise TypeError(f"Invalid Instantiable: {i}")
 
     # OK we've got a Module.
     # Whether to check the "bundled" or "flattened" IO is dependent on
@@ -266,12 +269,12 @@ def get_unconnected_instance_connections(module: Module, inst: Instance) -> dict
     # These will be two {str: Connectable} dictionaries, who should have the same keys,
     # and each paired value should be connection-compatible.
     conns = copy.copy(inst.conns)
-    # io = io_for_checking(parent=module, i=inst._resolved)
+    io_ports = io_for_checking(module, inst, debug_instance=True)
 
     # Track the status of each connection, so we can report the Instance-wide state if there are errors.
     statuses: Dict[str, ConnStatus] = dict()
 
-    for portname, port in io.items():
+    for portname, port in io_ports.items():
         # Get the corresponding connection
         conn = conns.pop(portname, None)
         if conn is None:

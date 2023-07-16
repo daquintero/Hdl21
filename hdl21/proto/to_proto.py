@@ -131,10 +131,7 @@ class ProtoExporter:
             pmod.signals.append(psig)
 
         # Create its Port-objects
-        print(module)
         for port in module.ports.values():
-            # print(port)
-            # print(port.name)
             pmod.ports.append(export_port(port))
 
         # Create each Proto-Instance
